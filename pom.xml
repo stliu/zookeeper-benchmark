@@ -10,6 +10,10 @@
   <name>ZooKeeper Benchmark</name>
   <url>http://github.com/brownsys/zookeeper-benchmark</url>
 
+  <properties>
+    <ZooKeeperVersion>3.4.6</ZooKeeperVersion>
+          </properties>
+
   <organization>
     <name>Brown Univ. Computer Science</name>
     <url>http://systems.cs.brown.edu</url>

@@ -14,7 +14,7 @@ public class AsyncBenchmarkClient extends BenchmarkClient {
 	private class Monitor { }
 	
 	TestType _currentType = TestType.UNDEFINED;
-	private Monitor _monitor = new Monitor();
+	private final Monitor _monitor = new Monitor();
 	private boolean _asyncRunning;
 
 	private static final Logger LOG = Logger.getLogger(AsyncBenchmarkClient.class);
@@ -69,30 +69,30 @@ public class AsyncBenchmarkClient extends BenchmarkClient {
 
 			switch (type) {
 				case READ:
-					_client.getData().inBackground(new Double(time)).forPath(_path);
+					_client.getData().inBackground(time).forPath(_path);
 					break;
 
 				case SETSINGLE:
-					data = new String(_zkBenchmark.getData() + i).getBytes();
-					_client.setData().inBackground(new Double(time)).forPath(
+					data = (_zkBenchmark.getData() + i).getBytes();
+					_client.setData().inBackground(time).forPath(
 							_path, data);
 					break;
 
 				case SETMULTI:
-					data = new String(_zkBenchmark.getData() + i).getBytes();
-					_client.setData().inBackground(new Double(time)).forPath(
+					data = (_zkBenchmark.getData() + i).getBytes();
+					_client.setData().inBackground(time).forPath(
 							_path + "/" + (_count % _highestN), data);
 					break;
 
 				case CREATE:
-					data = new String(_zkBenchmark.getData() + i).getBytes();
-					_client.create().inBackground(new Double(time)).forPath(
+					data = (_zkBenchmark.getData() + i).getBytes();
+					_client.create().inBackground(time).forPath(
 							_path + "/" + _count, data);
 					_highestN++;
 					break;
 
 				case DELETE:
-					_client.delete().inBackground(new Double(time)).forPath(_path + "/" + _count);
+					_client.delete().inBackground(time).forPath(_path + "/" + _count);
 					_highestDeleted++;
 
 					if (_highestDeleted >= _highestN) {

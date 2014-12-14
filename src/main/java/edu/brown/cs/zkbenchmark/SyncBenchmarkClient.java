@@ -46,13 +46,13 @@ public class SyncBenchmarkClient extends BenchmarkClient {
 					break;
 
 				case SETSINGLE:
-					data = new String(_zkBenchmark.getData() + i).getBytes();
+					data = (_zkBenchmark.getData() + i).getBytes();
 					_client.setData().forPath(_path, data);
 					break;
 
 				case SETMULTI:
 					try {
-						data = new String(_zkBenchmark.getData() + i).getBytes();
+						data = (_zkBenchmark.getData() + i).getBytes();
 						_client.setData().forPath(_path + "/" + (_count % _highestN), data);
 					} catch (NoNodeException e) {
 						LOG.warn("No such node when setting data to mutiple nodes. " +
@@ -62,7 +62,7 @@ public class SyncBenchmarkClient extends BenchmarkClient {
 					break;
 
 				case CREATE:
-					data = new String(_zkBenchmark.getData() + i).getBytes();
+					data = (_zkBenchmark.getData() + i).getBytes();
 					_client.create().forPath(_path + "/" + _count, data);
 					_highestN++;
 					break;
@@ -78,7 +78,7 @@ public class SyncBenchmarkClient extends BenchmarkClient {
 					}
 			}
 
-			recordElapsedInterval(new Double(submitTime));
+			recordElapsedInterval(submitTime);
 			_count++;
 			_zkBenchmark.incrementFinished();
 

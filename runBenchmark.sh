@@ -37,6 +37,7 @@ fi
 # Time to start
 
 mkdir "$SCRIPT_DIR/$RUN_NAME"
+cp all.plot "$SCRIPT_DIR/$RUN_NAME/all.plot"
 
 # Copy the parameters to be used
 CONF_FILE="`basename $CONF_PATH`"
@@ -51,14 +52,17 @@ git log -1 --format="%H" > "zookeeper-benchmark.version"
 java -cp ../target/lib/*:../target/* edu.brown.cs.zkbenchmark.ZooKeeperBenchmark --conf "$CONF_FILE" 2>&1 | tee "$RUN_NAME.out"
 
 # Optionally, plot some graphs
-if [ "`which gnuplot`" != "" ] && [ "$USE_GNUPLOT" == "--gnuplot" ]; then
-    gnuplot ../all.plot
-
-    if [ "`which ps2pdf`" != "" ]; then
-        for i in `ls -1 *.ps`; do
-            ps2pdf $i
-        done
-    fi
-fi
+# if [ "`which gnuplot`" != "" ] && [ "$USE_GNUPLOT" == "--gnuplot" ]; then
+    # gnuplot ../all.plot
+    #
+    # if [ "`which ps2pdf`" != "" ]; then
+    #     for i in `ls -1 *.ps`; do
+    #         ps2pdf $i
+    #     done
+    # fi
+    gnuplot all.plot
+    mkdir reports
+    cp *.png reports
+# fi
 
 popd 1>/dev/null

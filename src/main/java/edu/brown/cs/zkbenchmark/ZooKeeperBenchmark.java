@@ -9,8 +9,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.BrokenBarrierException;
-import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import joptsimple.OptionException;
@@ -30,7 +29,7 @@ public class ZooKeeperBenchmark {
 	private int _lowerbound;
 	private BenchmarkClient[] _clients;
 	private int _interval;
-	private HashMap<Integer, Thread> _running;
+	private final HashMap<Integer, Thread> _running;
 	private AtomicInteger _finishedTotal;
 	private int _lastfinished;
 	private int _deadline; // in units of "_interval"
@@ -132,7 +131,7 @@ public class ZooKeeperBenchmark {
 		for (int i = 0; i < _clients.length; i++) {
 			_clients[i].setTest(TestType.CLEANING);
 			Thread tmp = new Thread(_clients[i]);
-			_running.put(new Integer(i), tmp);
+			_running.put(i, tmp);
 			tmp.start();
 		}
 
@@ -175,7 +174,7 @@ public class ZooKeeperBenchmark {
 		for (int i = 0; i < _clients.length; i++) {
 			_clients[i].setTest(test);
 			Thread tmp = new Thread(_clients[i]);			
-			_running.put(new Integer(i), tmp);
+			_running.put(i, tmp);
 			tmp.start();
 		}
 
@@ -188,10 +187,11 @@ public class ZooKeeperBenchmark {
 			LOG.warn("Some other client was interrupted; Benchmark main thread is out of sync", e);
 		} catch (InterruptedException e) {
 			LOG.warn("Benchmark main thread was interrupted while waiting on barrier", e);
-		}		
-		
-		Timer timer = new Timer();
-		timer.scheduleAtFixedRate(new ResubmitTimer() , _interval, _interval);
+		}
+		ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
+		scheduledExecutorService.scheduleAtFixedRate(new ResubmitTimerCallbale(), _interval, _interval, TimeUnit.MILLISECONDS);
+//		Timer timer = new Timer();
+//		timer.scheduleAtFixedRate(new ResubmitTimer() , _interval, _interval);
 
 		// Wait for the test to finish
 
@@ -208,8 +208,8 @@ public class ZooKeeperBenchmark {
 		// Test is finished
 
 		_currentTest = TestType.UNDEFINED;
-		timer.cancel();
-
+//		timer.cancel();
+		scheduledExecutorService.shutdown();
 		try {
 			if (_rateFile != null) {
 				_rateFile.close();
@@ -229,24 +229,14 @@ public class ZooKeeperBenchmark {
 	/* return the max time consumed by each thread */
 	double getTime() {
 		double ret = 0;
-	
-		for (int i = 0; i < _clients.length; i++) {
-			if (ret < _clients[i].getTimeCount())
-				ret = _clients[i].getTimeCount();
+		for (BenchmarkClient _client : _clients) {
+			if (ret < _client.getTimeCount())
+				ret = _client.getTimeCount();
 		}
 
 		return (ret * _interval)/1000.0;
 	}
 
-	// TODO(adf): currently unused. should we keep it?
-	int getTotalOps() {
-		/* return the total number of reqs done by all threads */
-		int ret = 0;
-		for (int i = 0; i < _clients.length; i++) {
-			ret += _clients[i].getOpsCount();
-		}
-		return ret;
-	}
 
 	TestType getCurrentTest() {
 		return _currentTest;
@@ -378,8 +368,7 @@ public class ZooKeeperBenchmark {
 
 		System.exit(0);
 	}
-
-	class ResubmitTimer extends TimerTask {
+	class ResubmitTimerCallbale implements Runnable{
 		@Override
 		public void run() {
 			if (_currentTest == TestType.UNDEFINED) {
@@ -418,10 +407,55 @@ public class ZooKeeperBenchmark {
 				_currentTotalOps.getAndAdd(incr);
 				int avg = incr / _clients.length;
 
-				for (int i = 0; i < _clients.length; i++) {
-					_clients[i].resubmit(avg);
+				for (BenchmarkClient _client : _clients) {
+					_client.resubmit(avg);
 				}
 			}
 		}
 	}
+//	class ResubmitTimer extends TimerTask {
+//		@Override
+//		public void run() {
+//			if (_currentTest == TestType.UNDEFINED) {
+//				return;
+//			}
+//
+//			int finished = _finishedTotal.get();
+//			if (finished == 0) {
+//				return;
+//			}
+//
+//			_currentCpuTime = System.nanoTime();
+//
+//			if (_rateFile != null) {
+//				try {
+//					if (finished - _lastfinished > 0) {
+//						// Record the time elapsed and current rate
+//						String msg = ((double)(_currentCpuTime - _startCpuTime)/1000000000.0) + " " +
+//								((double)(finished - _lastfinished) /
+//										((double)(_currentCpuTime - _lastCpuTime) / 1000000000.0));
+//						_rateFile.write(msg+"\n");
+//					}
+//				} catch (IOException e) {
+//					LOG.error("Error when writing to output file", e);
+//				}
+//			}
+//
+//			_lastCpuTime = _currentCpuTime;
+//			_lastfinished = finished;
+//
+//			int numRemaining = _currentTotalOps.get() - finished;
+//
+//			if (numRemaining <= _lowerbound) {
+//				int incr = _totalOps - numRemaining;
+//
+//				_currentTotalOps.getAndAdd(incr);
+//				int avg = incr / _clients.length;
+//
+//				for (BenchmarkClient _client : _clients) {
+//					_client.resubmit(avg);
+//				}
+//			}
+//		}
+//	}
 }
