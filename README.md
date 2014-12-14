@@ -1,3 +1,9 @@
+# some notes:
+
+1. you need to have *gnupolt* installed
+2. use `sh runBenchmark.sh ${report location} ${conf file, if not then 'benchmark.conf' will be used}`
+
+
 # ZooKeeper Benchmark
 
 Authors: [Chen Liang](http://www.cs.brown.edu/~chen_liang/), [Andrew Ferguson](http://www.cs.brown.edu/~adf/), [Rodrigo Fonseca](http://www.cs.brown.edu/~rfonseca/)
